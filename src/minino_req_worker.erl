@@ -86,7 +86,6 @@ handle_call(_Request, _From, State) ->
     {reply, Reply, State}.
 
 handle_cast({work, [MReq, View, Args, MApp, AppTerm, Ref]}, State) ->
-    error_logger:info_msg("view: ~p~n", [View]),
     Response =
     	try
     	    MApp:View(MReq, Args, AppTerm)
