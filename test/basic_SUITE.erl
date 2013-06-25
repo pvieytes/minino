@@ -457,14 +457,21 @@ url_tests(_Config)->
     ok.
 
 get_dispatch_rules() ->
-    [%% {Id::atom(), RegexUrlPath::string(), view::atom()}
+    [%% {Id::atom(), RegexUrlPath::string(), View::atom()}|
+     %% {extension, RegexUrlPath::string(), Modules::atom(), Rules::atom()}|
      {home_page, "^/$", home_view},
      {home_page2, "^/home/$", home_view},
      {test_page, "^/test/(\\w*)/$", test_view},
      {articles_page, "^/articles/(\\d{4})/$", articles_view},
      {article_page, "^/articles/(\\d{4})/(\\d{2})/$", article_view},
      {get_page, "^/get/(\\d{2})/blog.(\\w{3,4})/$", get_view},
-     {posts_page, "^/post/(.*)", posts_view}
+     {posts_page, "^/post/(.*)", posts_view},
+     {extension, "^/extension", basic_SUITE, get_more_dispatch_rules}
+    ].
+
+get_more_dispatch_rules() ->
+    [
+     {extension_home_page, "/home/$", {module, home_view}}
     ].
 
 

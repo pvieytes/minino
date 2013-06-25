@@ -115,7 +115,7 @@ init([MConf]) ->
     {ok, #state{mapp=MApp,
     		mconf=MConf,
     		app_term=AppTerm,
-    		dispatch_rules=MApp:dispatch_rules()
+    		dispatch_rules=get_dispatch_rules(MApp)
     	       }}.
 %%--------------------------------------------------------------------
 %% @private
@@ -132,12 +132,12 @@ init([MConf]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(update_rules, _From, State) ->
-    MApp =State#state.mapp,
+    MApp = State#state.mapp,
     {ok, AppTerm} =  MApp:init(State#state.mconf),
     {reply, ok, State#state{
 			    app_term=AppTerm,
-			    dispatch_rules=MApp:dispatch_rules()
-			   }};
+			    dispatch_rules=get_dispatch_rules(MApp)
+		 }};
 
 handle_call({build_url, Id, Args}, _From, State) ->
     Reply = build_url(Id, Args, State#state.dispatch_rules),
@@ -293,3 +293,22 @@ inverse_url_end(List) ->
     end.
 
 
+
+
+get_dispatch_rules(MApp)->
+    get_dispatch_rules(MApp:dispatch_rules(), "", []).
+
+get_dispatch_rules([], ParentPath, Rules)->
+    Rules;
+get_dispatch_rules([{extension, Path, Module, RulesFun}|Rest], 
+		   ParentPath, 
+		   Rules) ->
+    ExtensionRules = get_dispatch_rules_2(Module:RulesFun, ParentPath ++ Path, []),
+    get_dispatch_rules(Rest, ParentPath, Rules ++ ExtensionRules);
+
+get_dispatch_rules([{Id, Path, View}|Rest], ParentPath, Rules)->
+    Rule = {Id, ParentPath ++ Path, View},
+    get_dispatch_rules(Rest, ParentPath, [Rule|Rules]).
+
+get_dispatch_rules_2(A,B,C) ->
+    get_dispatch_rules(A,B,C).
