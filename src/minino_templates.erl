@@ -113,7 +113,7 @@ render(Template, Args) ->
 %% @end
 %%--------------------------------------------------------------------
 init([MConf]) ->
-    TemplatesDir = 
+   TemplatesDir = 
     	case proplists:get_value(templates_dir, MConf) of
     	    undefined ->  filename:join(["priv", "templates"]);
     	    Else -> Else
@@ -121,12 +121,12 @@ init([MConf]) ->
     error_logger:info_msg("templates dir: ~p~n", [TemplatesDir]),
     Templates = get_templates(TemplatesDir),
     CompiledT =
-	try	    
-	    compile_templates(Templates)
-	catch _:Error ->
-		error_logger:error_msg("compile templates error: ~p~n", [Error]),
-		[]
-	end,
+    	try	    
+    	    compile_templates(Templates)
+    	catch _:Error ->
+    		error_logger:error_msg("compile templates error: ~p~n", [Error]),
+    		[]
+    	end,
     {ok, #state{compiled_templates=CompiledT}}.
 
 %%--------------------------------------------------------------------

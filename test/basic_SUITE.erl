@@ -114,8 +114,6 @@ init_per_testcase(sessions_example_tests, Config) ->
     minino:start(),
     Config;
 
-
-
 init_per_testcase(miscellaneous_example_tests, Config) ->
     %% compile app
     {ok, ExampleDir} = compile_example_mods(miscellaneous),   
@@ -199,18 +197,23 @@ init_per_testcase(escript_tests, Config) ->
 
     %% set settings.cfg file
     Settings = filename:join([TestPriv, "priv", "settings.cfg"]),
-    application:set_env(minino, settings_file, Settings),      
+    os:putenv("MININOSETTINGS", Settings),
 
     %% set templates dir
     Templates = filename:join([TestPriv, "priv", "templates"]),
-    application:set_env(minino, templates_dir, Templates),      
+    os:putenv("MININOTEMPLATES", Templates),
     
     %%start minino
-    minino:start(),
-    Config.
+    Port = start_minino_port(),
 
-end_per_testcase(_Test, _Config) ->
-    minino:stop(),
+    [{port, Port}|Config].
+
+end_per_testcase(_Test, Config) ->
+    case proplists:get_value(port, Config) of
+	undefined -> minino:stop();
+	Port ->
+	    stop_minino_port()
+    end,
     error_logger:info_msg("end test~n"),
     ok.
 
@@ -289,7 +292,6 @@ sessions_example_tests(_Config)->
     {ok, "minino1"} = dict:find("key", Dict3),
     ok.
 
-
 %%======================================================
 %%  miscellaneous_example_tests
 %%======================================================
@@ -304,7 +306,6 @@ miscellaneous_example_tests(_Config)->
 %%======================================================
 %% upload_file_example_tests 
 %%======================================================
-
 
 upload_file_example_tests(Config)->
     Url = "http://127.0.0.1:8000/upload",
@@ -328,11 +329,9 @@ post_file(Url, Path)->
     httpc:request(post, {Url, [], "image/png", Data}, [], []),
     ok.
 
-
 %%======================================================
 %% hello_world_example_tests
 %%======================================================
-
 
 hello_world_example_tests(_Config)->
     Url = "http://127.0.0.1:8000",
@@ -340,6 +339,8 @@ hello_world_example_tests(_Config)->
     error_logger:info_msg("code 200 -> ok~n"),
     {404, _Body1, _} = request(Url ++ "/undefined"),
     error_logger:info_msg("code 404 -> ok~n"),
+    "/home" = minino_api:build_url(home_page2, []),
+    "/test/testword"= minino_api:build_url(test_page, ["testword"]),
     ok.
 
 %%======================================================
@@ -352,9 +353,6 @@ escript_tests(_Config) ->
     error_logger:info_msg("test ping: ~p -> ok", [Url]),
     Cookie = check_cookies(Url),
     error_logger:info_msg("check cookies: ~p~n", [Cookie]),
-    %% build urls
-    "/home" = minino_api:build_url(home_page2, []),
-    "/test/testword"= minino_api:build_url(test_page, ["testword"]),
     ok.
 
 check_cookies(Url) ->
@@ -368,8 +366,6 @@ check_cookies(Url) ->
     error = get_session(Headers1),
     Cookie.
 
-
-
 %%======================================================
 %% Url Tests
 %%======================================================
@@ -377,7 +373,6 @@ url_tests(_Config)->
     Rules = get_dispatch_rules(),
 
     %% match urls
-
     {match, 
      home_page,
      home_view,
@@ -452,8 +447,6 @@ url_tests(_Config)->
   	minino_dispatcher:build_url(get_page, 
 				    ["03", "xml"], 
 				    Rules),
-
-
     ok.
 
 get_dispatch_rules() ->
@@ -467,7 +460,6 @@ get_dispatch_rules() ->
      {posts_page, "^/post/(.*)", posts_view}
     ].
 
-
 get_file_md5(CompletePath)->
     case file:open(CompletePath, [binary,raw,read]) of
 	{ok, P} -> 
@@ -480,7 +472,6 @@ get_file_md5(CompletePath)->
 	Error -> 
 	    Error
     end.
-
 
 get_code_loop(File, C) ->
     case file:read(File, ?BLOCKSIZE) of
@@ -549,3 +540,34 @@ get_session_loop([H|T])->
 	_Else ->
 	    get_session_loop(T) 
     end.
+
+start_minino_port()->
+    PrivDir = code:priv_dir(minino),
+    MininoPath = filename:join([PrivDir, "..", "bin", "minino"]),
+    Cmd = lists:flatten(io_lib:format("~s runserver", [MininoPath])),
+    Port = open_port({spawn,Cmd},
+    		     [binary,
+    		      {line, 255}, 
+    		      exit_status]),
+    print_minino_msg(Port),
+    Port.
+
+print_minino_msg(Port) ->
+    receive
+	{Port,{data, {eol, Bin}}} ->
+	    error_logger:info_msg("MININO PORT: ~s~n",[erlang:binary_to_list(Bin)]),
+	    print_minino_msg(Port)
+    after 500 ->
+	    ok
+    end.
+
+stop_minino_port() ->
+    PrivDir = code:priv_dir(minino),
+    MininoPath = filename:join([PrivDir, "..", "bin", "minino"]),  
+    Cmd = lists:flatten(io_lib:format("~s stop", [MininoPath])),
+
+    Port = open_port({spawn,Cmd},
+    		     [binary,
+    		      {line, 255}, 
+    		      exit_status]),
+    print_minino_msg(Port).

@@ -83,10 +83,17 @@ is_command_loop(Command, [_Head|Commands]) ->
 
 %% noapp | appcreated
 get_status()->
-    case filelib:wildcard(filename:join("src", "*.erl")) of
-	[] -> noapp;
-	_ -> appcreated
+    Settings = 
+	case os:getenv("MININOSETTINGS") of
+	    false -> filename:join(["priv", "settings.cfg"]);
+	    S -> S
+	end,
+    case filelib:is_regular(Settings) of
+	true -> 
+	    appcreated;
+	false -> noapp
     end.
+
 
 get_commands(Status)->
     Acc0 = {[],[]},

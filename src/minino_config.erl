@@ -167,10 +167,15 @@ read_file()->
     Filename = 
 	case application:get_env(minino, settings_file) of
 	    {ok, S} -> S;
-	    _ -> filename:join(["priv", "settings.cfg"])
+	    _ -> 
+		case os:getenv("MININOSETTINGS") of
+		    false ->			
+			filename:join(["priv", "settings.cfg"]);
+		    Else ->
+			Else
+		end
 	end,
     {ok, Conf} = file:consult(Filename),
-
     Conf1 =
     	lists:foldl(
     	  fun({included_applications,_}, Acc) ->
@@ -180,5 +185,10 @@ read_file()->
     	  end,
     	  Conf,
     	  application:get_all_env(minino)),
-    {ok, Conf1}.
+    Conf2 = 
+	case os:getenv("MININOTEMPLATES") of
+	    false -> Conf1;
+	    TemplatesPath -> [{templates_dir, TemplatesPath}|Conf1]
+	end,
+    {ok, Conf2}.
 

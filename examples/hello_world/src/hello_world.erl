@@ -19,7 +19,9 @@ init(_MConf) ->
 
 dispatch_rules() ->
     [%% {Id::atom(), RegexUrlPath::string(), view::atom()}
-        {home_page, "^/$", home_view}
+     {home_page, "^/$", home_view},
+     {home_page2, "^/home$", home_view},
+     {test_page, "^/test/(\\w*)$", test_view}
     ].
 
 %% views
