@@ -54,10 +54,10 @@
 
 
 main(Args) ->
-
     Status = get_status(),
     Commands = get_commands(Status),
-    {ok, {[], CommandArgs}} = getopt:parse([], Args),
+    {ok, {Opts, CommandArgs}} = getopt:parse(option_spec_list(), Args),
+    add_paths(Opts),
     case is_command(CommandArgs, Commands) of
 	true -> 
 	    case command(CommandArgs) of
@@ -362,3 +362,25 @@ rebar_comp_loop(Port, Pid) ->
 	{Port,{exit_status,0}} ->
 	    Pid ! finished
     end.
+
+
+
+option_spec_list() ->
+    [
+     %% {Name,     ShortOpt,  LongOpt,       ArgSpec,   HelpMsg}
+     {path_a,      $a,        "pa",          string,    "Adds the specified directories to the beginning of the code path"}
+    ].
+
+
+
+
+add_paths(Opts) ->
+    lists:foreach(
+      fun({path_a, Path}) ->
+	      code:add_patha(Path),
+	      error_logger:info_msg("path added: ~p~n", [Path]);
+	 (_) ->
+	      ignore
+      end,
+      Opts).
+				  

@@ -73,7 +73,4 @@ init(Params) ->
     	catch _:_E ->
     		[]
     	end,
-    %% AppChildSpecs = [],
-
-
     {ok, {{one_for_one, 5, 10}, Specs ++ AppChildSpecs}}.
