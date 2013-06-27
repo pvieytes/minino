@@ -51,17 +51,15 @@ init(_Transport, CReq, []) ->
 handle(CReq, State) ->
     {ok, MReq} = minino_sessions:get_or_create(#mreq{creq=CReq}),
     Ref = minino_dispatcher:dispatch(MReq),
-    {Msg, Code, MReq2} = receive_loop(Ref),
+    {Msg, Code, MReq2, Headers} = receive_loop(Ref),
     {ok, NewCReq} = cowboy_req:reply(Code, 
-				     [{<<"connection">>, <<"close">>}], 
+				     Headers, 
 				     Msg, 
 				     MReq2#mreq.creq),
     {ok, NewCReq, State}.
 
-
 terminate(_Reason, _Req, _State) ->
     ok.
-
 
 receive_loop(Ref) ->
     receive

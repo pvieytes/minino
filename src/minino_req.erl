@@ -40,28 +40,36 @@
 -include("include/minino.hrl").
 
 -export([response/2,
+	 response/3,
 	 path/1,
 	 get_method/1,
 	 get_params/1
 	]). 
 
-response({error, Code}, MReq) ->
-    ErrorMsg = create_msg_error(Code),
-    {ErrorMsg, Code, MReq};
+response(M, MReq) ->
+    response(M, MReq, []).
+    
+response({error, Code, ErrorMsg}, MReq, Headers) ->
+    ErrorMsg = create_msg_error(Code, ErrorMsg),
+    {ErrorMsg, Code, MReq, Headers};
 
-response(Msg, MReq) ->
-     {list_to_binary(Msg), 200, MReq}.
+response({error, Code}, MReq, Headers) ->
+    ErrorMsg = create_msg_error(Code, ""),
+    {ErrorMsg, Code, MReq, Headers};
+
+response(Msg, MReq, Headers) ->
+     {list_to_binary(Msg), 200, MReq, Headers}.
 
 path(MReq) ->
     {BinPath, _} = cowboy_req:path(MReq#mreq.creq),
     binary_to_list(BinPath).
 
-create_msg_error(404) ->
+create_msg_error(404, "") ->
     <<"Error 404: Not found.">>;
-create_msg_error(500) ->
+create_msg_error(500, "") ->
     <<"Error 500: Internal server error.">>;
-create_msg_error(Code) when is_integer(Code) ->
-    Msg = lists:flaten(io_lib:format("error ~p", [Code])),
+create_msg_error(Code, ErrorMsg) when is_integer(Code) ->
+    Msg = lists:flaten(io_lib:format("error ~p  ~p", [Code, ErrorMsg])),
     list_to_binary(Msg).
 
 

@@ -37,7 +37,8 @@
 -module(minino_api).
 -include("include/minino.hrl").
 
--export([response/2,
+-export([response/3,
+	 response/2,
 	 path/1,
 	 render_template/2,
 	 build_url/2,
@@ -57,6 +58,17 @@
 	 url_params/1
 	]).
 
+%% @doc Create a valid minino response.
+%% 
+%% @end
+
+-spec response(Msg::{error, Code::integer()}|
+		    {error, Code::integer(), ErrorMsg::string()}|
+		    string(), 
+	       MReq::minino_req(),
+	      Header::term()) -> R::hidden().
+response(Msg, MReq, Headers) ->
+    minino_req:response(Msg, MReq, Headers).
 
 %% @doc Create a valid minino response.
 %% 
