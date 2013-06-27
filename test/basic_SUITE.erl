@@ -14,7 +14,8 @@
 	 sessions_example_tests/1,
 	 statics_example_tests/1,
 	 templates_example_tests/1,
-	 cookies_example_tests/1
+	 cookies_example_tests/1,
+	 json_example_tests/1
 	]).
 
 all() -> [
@@ -26,8 +27,30 @@ all() -> [
 	  miscellaneous_example_tests,
 	  upload_file_example_tests,
 	  hello_world_example_tests,
+	  json_example_tests,
 	  escript_tests
 	 ].
+
+
+init_per_testcase(json_example_tests, Config) ->
+    %% compile app
+    {ok, ExampleDir} = compile_example_mods(json),   
+   
+    %% set settings.cfg file
+    Settings = filename:join([ExampleDir, "priv", "settings.cfg"]),
+    application:set_env(minino, settings_file, Settings),      
+
+    %% set templates dir
+    Templates = filename:join([ExampleDir, "priv", "templates"]),
+    application:set_env(minino, templates_dir, Templates),      
+
+    %% start inets
+    application:start(inets),
+
+    %%start minino
+    minino:start(),
+    Config;
+
 
 init_per_testcase(cookies_example_tests, Config) ->
     %% compile app
@@ -216,6 +239,18 @@ end_per_testcase(_Test, Config) ->
     end,
     error_logger:info_msg("end test~n"),
     ok.
+%%======================================================
+%% json_example_tests
+%%======================================================
+
+json_example_tests(_Config)->
+    Url = "http://127.0.0.1:8000",
+    Request = {Url, []},
+    {ok, {{_,200,_}, _ReceivedHeaders, _Body}} = httpc:request(get, Request, [{timeout, 3000}], []),
+    %% {200, _Body1, _SessionKey} = request(Url),
+    ok.
+
+
 
 %%======================================================
 %% cookies_example_tests
