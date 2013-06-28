@@ -45,7 +45,8 @@
 	 {"runserver", "runserver [port]", appcreated},
 	 {"debug", "debug [port]", appcreated},
 	 {"stop", "stop minino", always},
-	 {"compile", "compile", appcreated}
+	 {"compile", "compile", appcreated},
+	 {"extract", "extract files", always}
 
 	]).
 
@@ -144,8 +145,9 @@ command(CommandArgs)->
 	["stop"] ->
 	    stop_minino();
 	["compile"|_Args] ->
-	    compile_files(),
-	    io:format("~n");
+	    compile_files();
+	["extract"|Args] ->
+	    extract_files(Args);
 	_ -> notavailable
     end.
 
@@ -306,7 +308,7 @@ compile_files()->
 	    lists:foreach(
 	      fun(Path) ->
 		      Result = compile:file(Path, Opts),
-		      io:format("compile ~p -> ~p", [Path, Result]),
+		      io:format("compile ~p -> ~p~n", [Path, Result]),
 		      {ok, _Mod} = Result
 	      end,
 	      Files)
@@ -383,4 +385,27 @@ add_paths(Opts) ->
 	      ignore
       end,
       Opts).
-				  
+
+extract_files(Arg)->
+    BasePath = 
+	case Arg of
+	    [] ->
+		"ebin";
+	    [P] -> P
+	end,
+    filelib:ensure_dir(filename:join(BasePath,"dummyfile")),
+    {ok, PropList} = escript:extract(escript:script_name(), []),
+    Archive = proplists:get_value(archive, PropList),
+    zip:foldl(
+      fun(FileInArchive, _GetInfo, GetBin, _Acc) ->
+	      case re:run(FileInArchive, ".*.beam$|.*.app$", []) of
+		  {match, _} ->
+		      Filename = filename:join(BasePath, FileInArchive),
+		      R = file:write_file(Filename, GetBin()),
+		      io:format("filename: ~p -> ~p~n", [Filename, R]);
+		  nomatch -> ok
+	      end
+      end,
+      [],
+      {"minino", Archive}),
+    ok.
