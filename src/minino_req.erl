@@ -43,15 +43,18 @@
 	 response/3,
 	 path/1,
 	 get_method/1,
-	 get_params/1
+	 get_params/1,
+	 get_body/1,
+	 get_headers/1,
+	 get_header/2
 	]). 
 
 response(M, MReq) ->
     response(M, MReq, []).
     
 response({error, Code, ErrorMsg}, MReq, Headers) ->
-    ErrorMsg = create_msg_error(Code, ErrorMsg),
-    {ErrorMsg, Code, MReq, Headers};
+    ErrorMsg1 = create_msg_error(Code, ErrorMsg),
+    {ErrorMsg1, Code, MReq, Headers};
 
 response({error, Code}, MReq, Headers) ->
     ErrorMsg = create_msg_error(Code, ""),
@@ -69,7 +72,7 @@ create_msg_error(404, "") ->
 create_msg_error(500, "") ->
     <<"Error 500: Internal server error.">>;
 create_msg_error(Code, ErrorMsg) when is_integer(Code) ->
-    Msg = lists:flaten(io_lib:format("error ~p  ~p", [Code, ErrorMsg])),
+    Msg = lists:flatten(io_lib:format("error ~p ~s", [Code, ErrorMsg])),
     list_to_binary(Msg).
 
 
@@ -85,3 +88,24 @@ get_method(MReq) ->
 get_params(MReq) ->
     {Args, _Creq} = cowboy_req:qs_vals(MReq#mreq.creq),
     Args.
+
+%% @doc get request body
+-spec get_body(MReq::minino_req()) -> [{Key::binary(), Value::binary()}].
+get_body(MReq) ->
+    case  cowboy_req:body_qs(MReq#mreq.creq) of
+	{ok, Body, _} ->
+	    {ok, Body};
+	Else -> Else
+    end.
+
+%% @doc get request headers
+-spec get_headers(MReq::minino_req()) -> [{Key::binary(), Value::iodata()}].
+get_headers(MReq) ->
+   cowboy_req:headers(MReq#mreq.creq).
+
+%% @doc get request header
+-spec get_header(Name::binary(), MReq::minino_req()) -> binary()|undef.
+get_header(Name, MReq) ->
+    {Val, _CReq} = cowboy_req:header(Name, MReq#mreq.creq),
+    Val.
+	
