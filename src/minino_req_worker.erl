@@ -86,26 +86,16 @@ handle_call(_Request, _From, State) ->
     {reply, Reply, State}.
 
 handle_cast({work, [MReq, View, Args, MApp, AppTerm, Ref]}, State) ->
-    Response =
-    	try
-    	    MApp:View(MReq, Args, AppTerm)
-    	catch Class:Exception ->
-    		ErrorMsg =
-    		    "error in ~p:~p ~n" ++
-    		    "~p:~p~n" ++
-    		    "view: ~p~n" ++ 
-    		    "args: ~p~n" ++
-    		    "minino request: ~p~n",
-    		error_logger:error_msg(ErrorMsg, 
-    				       [MApp, 
-    					View, 
-    					Class, 
-    					Exception, 
-    					View, 
-    					Args,
-    					MReq]),
-    		minino_api:response({error, 500}, MReq)
-    	end,
+    Response = 
+	case (catch  MApp:View(MReq, Args, AppTerm)) of
+	    {'EXIT', Term} ->
+		S = "~p:~p ~p-> ~n~p ~nMreq: ~n~p",
+		A = [MApp, View, Args, Term, MReq],
+		error_logger:error_msg(S, A),
+		Msg = lists:flatten(io_lib:format(S, A)),
+		minino_api:response({error, 500, Msg}, MReq);
+	    R -> R
+	end,
     minino_dispatcher:response(MReq#mreq.from, Response, Ref),
     {noreply, State}.
 
@@ -121,8 +111,4 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-
-
-
 

@@ -15,7 +15,8 @@
 	 statics_example_tests/1,
 	 templates_example_tests/1,
 	 cookies_example_tests/1,
-	 json_example_tests/1
+	 json_example_tests/1,
+	 app_tests/1
 	]).
 
 all() -> [
@@ -28,8 +29,30 @@ all() -> [
 	  upload_file_example_tests,
 	  hello_world_example_tests,
 	  json_example_tests,
-	  escript_tests
+	  escript_tests,
+	  app_tests
 	 ].
+
+init_per_testcase(app_tests, Config) ->
+    DataDir =proplists:get_value(data_dir, Config),
+    File = filename:join([DataDir, "app_tests", "src", "app_tests.erl"]),
+    {ok, _Mod} = compile:file(File), 
+
+    %% set settings.cfg file
+    Settings = filename:join([DataDir, "app_tests", "priv", "settings.cfg"]),
+    application:set_env(minino, settings_file, Settings),      
+
+    %% set templates dir
+    Templates = filename:join([DataDir, "app_tests", "priv", "templates"]),
+    application:set_env(minino, templates_dir, Templates),      
+
+    %% start inets
+    application:start(inets),
+
+    error_logger:info_msg("~p ~p", [Settings,Templates]),
+    %%start minino
+    minino:start(),
+    Config;
 
 
 init_per_testcase(json_example_tests, Config) ->
@@ -239,6 +262,15 @@ end_per_testcase(_Test, Config) ->
     end,
     error_logger:info_msg("end test~n"),
     ok.
+
+
+
+app_tests(_Config)->
+    Domain = "http://127.0.0.1:8000",
+    {200, _, _} = request(Domain),
+    {500, _, _} = request(Domain ++ "/crash"),
+    ok.
+
 %%======================================================
 %% json_example_tests
 %%======================================================
@@ -247,7 +279,6 @@ json_example_tests(_Config)->
     Url = "http://127.0.0.1:8000",
     Request = {Url, []},
     {ok, {{_,200,_}, _ReceivedHeaders, _Body}} = httpc:request(get, Request, [{timeout, 3000}], []),
-    %% {200, _Body1, _SessionKey} = request(Url),
     ok.
 
 
