@@ -163,7 +163,7 @@ handle_cast({dispatch, MReq, From, Ref}, State) ->
     MReq1 = MReq#mreq{from=From},
     case  match_url(Path, State#state.dispatch_rules) of
 	nomatch ->
-	    Response = minino_api:response({error, 404}, MReq1),
+	    Response = minino_api:response({status, 404}, MReq1),
 	    minino_dispatcher:response(From, Response, Ref);
 	{match, _Id, View, Args}  ->
 

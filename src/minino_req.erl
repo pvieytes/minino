@@ -49,32 +49,31 @@
 	 get_header/2
 	]). 
 
+
+
+
+
 response(M, MReq) ->
     response(M, MReq, []).
     
-response({error, Code, ErrorMsg}, MReq, Headers) ->
-    ErrorMsg1 = create_msg_error(Code, ErrorMsg),
-    {ErrorMsg1, Code, MReq, Headers};
+response({status, Code}, MReq, Headers) when is_integer(Code) ->
+        response({status, Code, <<"">>}, MReq, Headers);
 
-response({error, Code}, MReq, Headers) ->
-    ErrorMsg = create_msg_error(Code, ""),
-    {ErrorMsg, Code, MReq, Headers};
+response(Msg, MReq, Headers) when is_list(Msg)->
+    response({status, 200, list_to_binary(Msg)}, MReq, Headers);
 
-response(Msg, MReq, Headers) ->
-     {list_to_binary(Msg), 200, MReq, Headers}.
+response(Msg, MReq, Headers) when is_binary(Msg)->
+    response({status, 200, Msg}, MReq, Headers);
+
+response({status, Code, Msg}, MReq, Headers) when is_binary(Msg)->
+    {Msg, Code, MReq, Headers};
+
+response({status, Code, Msg}, MReq, Headers) when is_list(Msg)->
+    {list_to_binary(Msg), Code, MReq, Headers}.
 
 path(MReq) ->
     {BinPath, _} = cowboy_req:path(MReq#mreq.creq),
     binary_to_list(BinPath).
-
-create_msg_error(404, "") ->
-    <<"Error 404: Not found.">>;
-create_msg_error(500, "") ->
-    <<"Error 500: Internal server error.">>;
-create_msg_error(Code, ErrorMsg) when is_integer(Code) ->
-    Msg = lists:flatten(io_lib:format("error ~p ~s", [Code, ErrorMsg])),
-    list_to_binary(Msg).
-
 
 %% @doc get method
 -spec get_method(MReq::minino_req()) -> string().

@@ -62,8 +62,8 @@
 %% 
 %% @end
 
--spec response(Msg::{error, Code::integer()}|
-		    {error, Code::integer(), ErrorMsg::string()}|
+-spec response(Msg::{status, Code::integer()}|
+		    {status, Code::integer(), ErrorMsg::string()}|
 		    string(), 
 	       MReq::minino_req(),
 	      Header::term()) -> R::hidden().

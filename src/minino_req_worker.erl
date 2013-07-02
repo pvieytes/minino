@@ -93,7 +93,7 @@ handle_cast({work, [MReq, View, Args, MApp, AppTerm, Ref]}, State) ->
 		A = [MApp, View, Args, Term, MReq],
 		error_logger:error_msg(S, A),
 		Msg = lists:flatten(io_lib:format(S, A)),
-		minino_api:response({error, 500, Msg}, MReq);
+		minino_api:response({status, 500, Msg}, MReq);
 	    R -> R
 	end,
     minino_dispatcher:response(MReq#mreq.from, Response, Ref),
