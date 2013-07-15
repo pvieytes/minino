@@ -39,6 +39,9 @@
 
 -export([response/3,
 	 response/2,
+	 noresponse/0,
+	 async_response/2,
+	 async_response/3,
 	 path/1,
 	 render_template/2,
 	 build_url/2,
@@ -61,7 +64,6 @@
 %% @doc Create a valid minino response.
 %% 
 %% @end
-
 -spec response(Msg::{status, Code::integer()}|
 		    {status, Code::integer(), ErrorMsg::string()}|
 		    string(), 
@@ -73,10 +75,34 @@ response(Msg, MReq, Headers) ->
 %% @doc Create a valid minino response.
 %% 
 %% @end
-
 -spec response(Msg::{error, Code::integer()}|string(), MReq::minino_req()) -> R::hidden().
 response(Msg, MReq) ->
     minino_req:response(Msg, MReq).
+
+%% @doc Create a valid async minino response.
+%% 
+%% @end
+-spec async_response(Msg::{status, Code::integer()}|
+		    {status, Code::integer(), ErrorMsg::string()}|
+		    string(), 
+	       MReq::minino_req(),
+	      Header::term()) -> R::hidden().
+async_response(Msg, MReq, Headers) ->
+    minino_req:async_response(Msg, MReq, Headers).
+
+%% @doc Create a valid async minino response.
+%% 
+%% @end
+-spec async_response(Msg::{error, Code::integer()}|string(), MReq::minino_req()) -> R::hidden().
+async_response(Msg, MReq) ->
+    minino_req:async_response(Msg, MReq).
+
+%% @doc No response
+%% 
+%% @end
+-spec noresponse() -> ok.
+noresponse() ->
+    minino_req:noresponse().
 
 
 %% @doc get the request path

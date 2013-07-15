@@ -41,6 +41,9 @@
 
 -export([response/2,
 	 response/3,
+	 noresponse/0,
+	 async_response/2,
+	 async_response/3,
 	 path/1,
 	 get_method/1,
 	 get_params/1,
@@ -70,6 +73,20 @@ response({status, Code, Msg}, MReq, Headers) when is_binary(Msg)->
 
 response({status, Code, Msg}, MReq, Headers) when is_list(Msg)->
     {list_to_binary(Msg), Code, MReq, Headers}.
+
+noresponse()->
+    noresponse.
+
+async_response(M, MReq) ->
+    async_response(M, MReq, []).
+
+async_response(M, MReq, Headers) ->
+    MResponse = response(M, MReq, Headers),
+    minino_dispatcher:response(MReq#mreq.from, 
+			       MResponse, 
+			       MReq#mreq.ref).
+    
+
 
 path(MReq) ->
     {BinPath, _} = cowboy_req:path(MReq#mreq.creq),

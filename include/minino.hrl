@@ -8,7 +8,8 @@
 -record(mreq,  {creq,
 		build_url_fun,
 		session,
-		from}).
+		from,
+		ref}).
 
 -define(DEFAULTSESSIONTIME, 604800).
 -define(DEFAULTSESSIONNAME, "msession").

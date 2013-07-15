@@ -81,7 +81,7 @@ start_link(Params) ->
 
 dispatch(MReq) ->
     Ref = make_ref(),
-    gen_server:cast(?SERVER, {dispatch, MReq, self(), Ref}),
+    gen_server:cast(?SERVER, {dispatch, MReq#mreq{ref=Ref}, self(), Ref}),
     Ref.
 
 response(To, MResponse, Ref) ->

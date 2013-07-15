@@ -96,7 +96,12 @@ handle_cast({work, [MReq, View, Args, MApp, AppTerm, Ref]}, State) ->
 		minino_api:response({status, 500, Msg}, MReq);
 	    R -> R
 	end,
-    minino_dispatcher:response(MReq#mreq.from, Response, Ref),
+    case Response of
+	noresponse ->
+	    ignore;
+	Response ->
+	    minino_dispatcher:response(MReq#mreq.from, Response, Ref)
+    end,
     {noreply, State}.
 
 handle_info(_Info, State) ->

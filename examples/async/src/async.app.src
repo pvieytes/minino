@@ -1,4 +1,4 @@
-{application, minino,
+{application, async,
  [
   {description, ""},
   {vsn, "1"},
@@ -7,7 +7,6 @@
                   kernel,
                   stdlib
                  ]},
-  {mod, {minino_app, []}},
+  {mod, {async, []}},
   {env, []}
  ]}.
-

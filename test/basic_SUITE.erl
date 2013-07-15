@@ -16,6 +16,7 @@
 	 templates_example_tests/1,
 	 cookies_example_tests/1,
 	 json_example_tests/1,
+	 async_example_tests/1,
 	 app_tests/1
 	]).
 
@@ -30,6 +31,7 @@ all() -> [
 	  hello_world_example_tests,
 	  json_example_tests,
 	  escript_tests,
+	  async_example_tests,
 	  app_tests
 	 ].
 
@@ -54,6 +56,24 @@ init_per_testcase(app_tests, Config) ->
     minino:start(),
     Config;
 
+init_per_testcase(async_example_tests, Config) ->
+    %% compile app
+    {ok, ExampleDir} = compile_example_mods(async),   
+   
+    %% set settings.cfg file
+    Settings = filename:join([ExampleDir, "priv", "settings.cfg"]),
+    application:set_env(minino, settings_file, Settings),      
+
+    %% set templates dir
+    Templates = filename:join([ExampleDir, "priv", "templates"]),
+    application:set_env(minino, templates_dir, Templates),      
+
+    %% start inets
+    application:start(inets),
+
+    %%start minino
+    minino:start(),
+    Config;
 
 init_per_testcase(json_example_tests, Config) ->
     %% compile app
@@ -221,7 +241,6 @@ init_per_testcase(hello_world_example_tests, Config) ->
     Config;  
 
 
-
 init_per_testcase(url_tests, Config) ->
     Config;   
 
@@ -284,6 +303,16 @@ json_example_tests(_Config)->
 
 
 %%======================================================
+%% async_example_tests
+%%======================================================
+
+async_example_tests(_Config)->
+    Url = "http://127.0.0.1:8000",
+    {200, _Body1, SessionKey} = request(Url),
+    ok.
+
+
+%%======================================================
 %% cookies_example_tests
 %%======================================================
 
@@ -316,8 +345,6 @@ check_new_cookie(Url, NewCookie, SessionKey)->
 	      end,
 	      string:tokens(Val, "; "))
     end.
-
-
 
 
 
